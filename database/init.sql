@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE TABLE IF NOT EXISTS sessions (
   userId INT(11) UNSIGNED NOT NULL,
-  token VARCHAR(6) UNSIGNED NOT NULL,
+  token VARCHAR(6) NOT NULL,
   UNIQUE KEY sessions_token_unique (token)
 );
 
