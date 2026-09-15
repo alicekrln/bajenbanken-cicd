@@ -3,14 +3,14 @@ services:
     build:
       context: ./frontend
     ports:
-      - "3000:3000"
+      - '3000:3000'
 
   express:
     build:
       context: ./backend
     environment:
       DB_HOST: mysql
-      DB_PORT: 3306
+      DB_PORT: 3307
       DB_USER: bank_app
       DB_PASSWORD: bank_password
       DB_NAME: bank
@@ -18,7 +18,7 @@ services:
       mysql:
         condition: service_healthy
     ports:
-      - "3001:3001"
+      - '3001:3001'
 
   mysql:
     image: mysql:8.4
@@ -28,15 +28,15 @@ services:
       MYSQL_USER: bank_app
       MYSQL_PASSWORD: bank_password
     ports:
-      - "3307:3306"
+      - '3307:3306'
     volumes:
       - mysql-data:/var/lib/mysql
       - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     healthcheck:
       test:
         [
-          "CMD-SHELL",
-          "mysqladmin ping -h localhost -uroot -p$${MYSQL_ROOT_PASSWORD} --silent",
+          'CMD-SHELL',
+          'mysqladmin ping -h localhost -uroot -p$${MYSQL_ROOT_PASSWORD} --silent',
         ]
       interval: 5s
       timeout: 5s
