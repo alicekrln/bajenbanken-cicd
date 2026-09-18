@@ -9,8 +9,20 @@ export default function Account() {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
-
   const [note, setNote] = useState('')
+  const [transactions, setTransactions] = useState<
+    Array<{ note?: string; amount: number }>
+  >([])
+
+  function fetchTransactions(t: string) {
+    fetch('http://51.21.196.203:3001/me/accounts/transactions/history', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: t }),
+    })
+      .then((res) => res.json())
+      .then((data) => setTransactions(data.transactions || []))
+  }
 
   useEffect(() => {
     const t = localStorage.getItem('token') || ''
@@ -22,6 +34,7 @@ export default function Account() {
     })
       .then((res) => res.json())
       .then((data) => setBalance(data.amount))
+      fetchTransactions(t)
   }, [])
 
   async function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
@@ -41,6 +54,7 @@ export default function Account() {
           body: JSON.stringify({
             token,
             amount: Number(value),
+            note,
           }),
         },
       )
@@ -51,6 +65,7 @@ export default function Account() {
       setBusy(false)
       setValue('')
       setNote('')
+      fetchTransactions(token)
     } catch (err) {
       setError(
         err instanceof Error ? err.message : 'Något fick fel, försök igen',
@@ -125,10 +140,24 @@ export default function Account() {
               Tidigare insättningar
             </h1>
             <ul className='mt-4 space-y-3'>
-              <li className='flex items-center justify-between rounded-2xl bg-secondary px-4 py-3 text-sm'>
-                <span className='text-secondary-foreground'>Vann på lotto</span>
-                <span className='font-bold text-primary'>+ 9 kr</span>
-              </li>
+              {transactions.length === 0 && (
+                <li className='text-sm text-muted-foreground'>
+                  Inga insättningar än.
+                </li>
+              )}
+              {transactions.map((t, i) => (
+                <li
+                  key={i}
+                  className='flex items-center justify-between rounded-2xl bg-secondary px-4 py-3 text-sm'
+                >
+                  <span className='text-secondary-foreground'>
+                    {t.note || 'Insättning'}
+                  </span>
+                  <span className='font-bold text-primary'>
+                    + {t.amount} kr
+                  </span>
+                </li>
+              ))}
             </ul>
           </div>
         </div>

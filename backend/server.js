@@ -110,7 +110,7 @@ app.post('/me/accounts', async (req, res) => {
 })
 
 app.post('/me/accounts/transactions', async (req, res) => {
-  const { token, amount } = req.body
+  const { token, amount, note } = req.body
 
   try {
     const sessionResult = await query(
@@ -124,20 +124,73 @@ app.post('/me/accounts/transactions', async (req, res) => {
 
     const userId = sessionResult[0].userId
 
-    await query('UPDATE accounts SET amount = amount + ? WHERE userId = ?', [
-      Number(amount),
-      userId,
-    ])
-
     const accountResult = await query(
       'SELECT * FROM accounts WHERE userId = ?',
       [userId],
     )
 
-    return res.json({ amount: accountResult[0].amount })
+    if (accountResult === 0) {
+      return res.status(401).json({ error: 'Inget konto hittades' })
+    }
+
+    const accountId = accountResult[0].id
+    
+    await query('UPDATE accounts SET amount = amount + ? WHERE userId = ?', [
+      Number(amount),
+      userId,
+    ])
+
+    await query('INSERT INTO transactions (accountId, amount, note) VALUES (?, ?, ?)',
+      [accountId, Number(amount), note || null],
+    )
+
+    const updatedAccount = await query(
+      'SELECT * FROM accounts WHERE userId = ?',
+      [userId],
+    )
+
+    return res.json({ amount: updatedAccount[0].amount })
   } catch (error) {
     console.error(error)
     return res.status(500).json({ error: 'Kunde inte genomföra insättningen' })
+  }
+})
+
+app.post('/me/accounts/transactions/history', async (req, res) => {
+  const { token } = req.body
+
+  try {
+    const sessionResult = await query(
+      'SELECT * FROM sessions WHERE token = ?',
+      [token],
+    )
+
+    if (sessionResult.length === 0) {
+      return res.status(401).json({ error: 'Ogiltig token' })
+    }
+
+    const userId = sessionResult[0].userId
+
+    const accountResult = await query(
+      'SELECT * FROM accounts WHERE userId = ?',
+      [userId]
+    )
+
+    if (accountResult.length === 0) {
+      return res.status(401).json({ error: 'Inget konto hittades' })
+    }
+
+    const accountId = accountResult[0].id
+
+    const transactions = await query(
+      'SELECT amount, note, createdAt FROM transactions WHERE accountId = ? ORDER BY createdAt DESC',
+      [accountId],
+    )
+
+    return res.json({ transactions })
+  } catch (error) {
+    console.error(error)
+    return res.status(500).json({ error: 'Kunde inte hämta transaktioner' })
   }
 })
 
