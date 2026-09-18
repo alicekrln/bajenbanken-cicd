@@ -33,7 +33,6 @@ export default function Login() {
       setToken(data.token)
       localStorage.setItem('token', data.token)
       router.push('/account')
-      console.log('Token:', data.token)
     } catch (err) {
       setError(
         err instanceof Error ? err.message : 'Fel användarnamn eller lösenord.',

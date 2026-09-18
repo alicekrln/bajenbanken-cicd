@@ -1,10 +1,8 @@
 import Link from 'next/link'
-import { Navbar } from './components/Navbar'
 
 export default function Home() {
   return (
     <div className='min-h-screen bg-background'>
-      <Navbar />
       <main className='mx-auto w-full max-w-5xl px-5 py-10'>
         <section className='grid items-center gap-10 md:grid-cols-2'>
           <div>
@@ -18,7 +16,7 @@ export default function Home() {
             <div className='mt-8 flex flex-wrap gap-3'>
               <Link
                 href='/register'
-                className='rounded-full bg-primary px-7 py-3 text-base font-bold text-background shadow-lg transition-transform hover:-translate-y-0.5'
+                className='flex rounded-full bg-primary px-7 py-3 items-center text-base font-bold text-background shadow-lg transition-transform hover:-translate-y-0.5'
               >
                 Skapa konto
               </Link>
@@ -35,12 +33,12 @@ export default function Home() {
             <p className='text-sm font-bold uppercase tracking-widest text-muted-foreground'>
               Ditt framtida bankkonto
             </p>
-            <p className='font-black mt-2 text-5xl text-primary'>1 337,00 kr</p>
+            <p className='font-black mt-2 text-5xl text-primary'>1889 kr</p>
             <div className='mt-6 space-y-3'>
               {[
-                ['Insättning från soffan', '+ 200,00 kr'],
-                ['Vann bet med en kompis', '+ 100,00 kr'],
-                ['Sålde avslagen bärs till gårdare', '+ 48,00 kr'],
+                ['Insättning från soffan', '+ 200 kr'],
+                ['Vann bet', '+ 100 kr'],
+                ['Sålde avslagen bärs till gårdare', '+ 48 kr'],
               ].map(([label, amount]) => (
                 <div
                   key={label}

@@ -29,7 +29,6 @@ export default function Register() {
         throw new Error(`Registrering misslyckades: ${res.status}`)
       }
       const data = await res.json()
-      console.log('Registrerad:', data)
       router.push('/login')
     } catch (err) {
       setError(
