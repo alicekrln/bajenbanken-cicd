@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS sessions (
   userId INT(11) UNSIGNED NOT NULL,
   token VARCHAR(6) NOT NULL,
+  PRIMARY KEY (userId),
   UNIQUE KEY sessions_token_unique (token)
 );
 
@@ -18,4 +19,13 @@ CREATE TABLE IF NOT EXISTS accounts (
   amount INT(20) NOT NULL,
   PRIMARY KEY (id),
   UNIQUE KEY accounts_id_unique (id)
+);
+
+CREATE TABLE IF NOT EXISTS transactions (
+  id INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+  accountId INT(11) UNSIGNED NOT NULL,
+  amount INT(20) NOT NULL,
+  note VARCHAR(120) NULL,
+  createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
 );
