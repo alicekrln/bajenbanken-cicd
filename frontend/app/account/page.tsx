@@ -7,7 +7,7 @@ import beerIcon from '../../public/beer.png'
 export default function Account() {
   const [value, setValue] = useState('')
   const [balance, setBalance] = useState('0')
-  const [token, setToken] = useState('')
+  const [token, setToken] = useState(() => localStorage.getItem('token') || '')
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   const [note, setNote] = useState('')
@@ -29,16 +29,22 @@ export default function Account() {
   }
 
   useEffect(() => {
-    const t = localStorage.getItem('token') || ''
-    setToken(t)
-    fetch('http://51.21.196.203:3001/me/accounts', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token: t }),
-    })
-      .then((res) => res.json())
-      .then((data) => setBalance(data.amount))
-    fetchTransactions(t)
+    if (!token) return
+    const loadUserData = async () => {
+      try {
+        const response = await fetch('http://51.21.196.203:3001/me/accounts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token }),
+        })
+        const data = await response.json()
+        setBalance(data.amount)
+        fetchTransactions(token)
+      } catch (e) {
+        console.error(e)
+      }
+    }
+    loadUserData()
   }, [])
 
   async function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {

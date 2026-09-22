@@ -1,17 +1,17 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 
 export function Navbar() {
   const router = useRouter()
-  const pathname = usePathname()
+  // const pathname = usePathname()
   const [isLoggedIn, setIsLoggedIn] = useState(false)
 
-  useEffect(() => {
-    setIsLoggedIn(!!localStorage.getItem('token'))
-  }, [pathname])
+  // useEffect(() => {
+  //   setIsLoggedIn(!!localStorage.getItem('token'))
+  // }, [pathname])
 
   function handleLogout() {
     localStorage.removeItem('token')
