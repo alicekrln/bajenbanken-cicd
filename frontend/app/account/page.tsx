@@ -7,13 +7,16 @@ import beerIcon from '../../public/beer.png'
 export default function Account() {
   const [value, setValue] = useState('')
   const [balance, setBalance] = useState('0')
-  const [token, setToken] = useState(() => localStorage.getItem('token') || '')
+  const [token, setToken] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   const [note, setNote] = useState('')
   const [transactions, setTransactions] = useState<
     Array<{ note?: string; amount: number; createdAt: string }>
   >([])
+
+  // const t = localStorage.getItem('token') || ''
+  // setToken(t)
 
   const BEER_PRICE_SEK = 45
   const beerCount = Math.max(0, Math.floor(Number(balance) / BEER_PRICE_SEK))
@@ -29,6 +32,7 @@ export default function Account() {
   }
 
   useEffect(() => {
+  const token = localStorage.getItem('token') || ''
     if (!token) return
     const loadUserData = async () => {
       try {
@@ -60,6 +64,7 @@ export default function Account() {
     }
 
     try {
+      const token = localStorage.getItem('token') || ''
       const res = await fetch(
         'http://51.21.196.203:3001/me/accounts/transactions',
         {
