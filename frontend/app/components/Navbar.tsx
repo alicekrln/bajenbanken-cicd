@@ -2,20 +2,28 @@
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useSyncExternalStore } from 'react'
+
+function subscribe(callback: () => void) {
+  window.addEventListener('storage', callback)
+  window.addEventListener('auth-change', callback)
+  return () => {
+    window.removeEventListener('storage', callback)
+    window.removeEventListener('auth-change', callback)
+  }
+}
 
 export function Navbar() {
   const router = useRouter()
-  // const pathname = usePathname()
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
-
-  // useEffect(() => {
-  //   setIsLoggedIn(!!localStorage.getItem('token'))
-  // }, [pathname])
+  const isLoggedIn = useSyncExternalStore(
+    subscribe,
+    () => !!localStorage.getItem('token'),
+    () => false,
+  )
 
   function handleLogout() {
     localStorage.removeItem('token')
-    setIsLoggedIn(false)
+    window.dispatchEvent(new Event('auth-change'))
     router.push('/')
   }
 

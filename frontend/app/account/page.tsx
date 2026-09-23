@@ -7,16 +7,12 @@ import beerIcon from '../../public/beer.png'
 export default function Account() {
   const [value, setValue] = useState('')
   const [balance, setBalance] = useState('0')
-  const [token, setToken] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   const [note, setNote] = useState('')
   const [transactions, setTransactions] = useState<
     Array<{ note?: string; amount: number; createdAt: string }>
   >([])
-
-  // const t = localStorage.getItem('token') || ''
-  // setToken(t)
 
   const BEER_PRICE_SEK = 45
   const beerCount = Math.max(0, Math.floor(Number(balance) / BEER_PRICE_SEK))
@@ -32,23 +28,15 @@ export default function Account() {
   }
 
   useEffect(() => {
-  const token = localStorage.getItem('token') || ''
-    if (!token) return
-    const loadUserData = async () => {
-      try {
-        const response = await fetch('http://51.21.196.203:3001/me/accounts', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token }),
-        })
-        const data = await response.json()
-        setBalance(data.amount)
-        fetchTransactions(token)
-      } catch (e) {
-        console.error(e)
-      }
-    }
-    loadUserData()
+    const t = localStorage.getItem('token') || ''
+    fetch('http://51.21.196.203:3001/me/accounts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: t }),
+    })
+      .then((res) => res.json())
+      .then((data) => setBalance(data.amount))
+    fetchTransactions(t)
   }, [])
 
   async function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
@@ -56,6 +44,7 @@ export default function Account() {
     setError(null)
     setSuccess(false)
 
+    const token = localStorage.getItem('token') || ''
     const parsedAmount = Number(value)
 
     if (!value.trim() || Number.isNaN(parsedAmount) || parsedAmount <= 0) {
@@ -64,7 +53,6 @@ export default function Account() {
     }
 
     try {
-      const token = localStorage.getItem('token') || ''
       const res = await fetch(
         'http://51.21.196.203:3001/me/accounts/transactions',
         {
@@ -105,8 +93,7 @@ export default function Account() {
   return (
     <div className='min-h-screen bg-background'>
       <main className='mx-auto w-full max-w-5xl px-5 py-10'>
-        <div className='flex flex-col items-center gap-6 rounded-3xl bg-primary px-8 py-10 text-center shadow-xl md:grid md:grid-cols-3 md:items-center md:gap-0 md:text-left'>
-          <div className='hidden md:block' />
+        <div className='flex flex-col items-center gap-6 rounded-3xl bg-primary px-8 py-10 text-center shadow-xl'>
           <div className='flex flex-col items-center'>
             <p className='text-sm font-bold uppercase tracking-widest text-background/80'>
               Hej där, ditt saldo är
@@ -115,16 +102,19 @@ export default function Account() {
               {balance} kr
             </p>
           </div>
-          <div className='flex justify-center md:justify-end pr-6'>
-            <div className='flex flex-col items-center'>
+          <div className='flex flex-col items-center'>
+            <p className='text-sm font-bold uppercase tracking-widest text-background/80'>
+              Räcker till
+            </p>
+            <div className='flex items-center mt-2 gap-1'>
+              <p className='font-black text-4xl text-background'>
+                {beerCount}
+              </p>
               <Image
                 src={beerIcon}
                 alt='Beer Icon'
-                className='max-h-20 max-w-20'
+                className='max-h-8 max-w-8'
               />
-              <p className='mt-2 text-sm font-bold text-background/80'>
-                Räcker till {beerCount} öl
-              </p>
             </div>
           </div>
         </div>

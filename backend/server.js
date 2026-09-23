@@ -22,9 +22,6 @@ async function query(sql, params) {
   return results
 }
 
-app.use(cors())
-app.use(bodyParser.json())
-
 function generateOTP() {
   const otp = Math.floor(100000 + Math.random() * 900000)
   return otp.toString()
@@ -129,18 +126,19 @@ app.post('/me/accounts/transactions', async (req, res) => {
       [userId],
     )
 
-    if (accountResult === 0) {
+    if (accountResult.length === 0) {
       return res.status(401).json({ error: 'Inget konto hittades' })
     }
 
     const accountId = accountResult[0].id
-    
+
     await query('UPDATE accounts SET amount = amount + ? WHERE userId = ?', [
       Number(amount),
       userId,
     ])
 
-    await query('INSERT INTO transactions (accountId, amount, note) VALUES (?, ?, ?)',
+    await query(
+      'INSERT INTO transactions (accountId, amount, note) VALUES (?, ?, ?)',
       [accountId, Number(amount), note || null],
     )
 
@@ -173,7 +171,7 @@ app.post('/me/accounts/transactions/history', async (req, res) => {
 
     const accountResult = await query(
       'SELECT * FROM accounts WHERE userId = ?',
-      [userId]
+      [userId],
     )
 
     if (accountResult.length === 0) {

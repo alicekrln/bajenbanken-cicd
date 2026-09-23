@@ -8,7 +8,6 @@ export default function Login() {
   const router = useRouter()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
-  const [token, setToken] = useState('')
   const [error, setError] = useState<string | null>(null)
 
   async function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
@@ -30,8 +29,8 @@ export default function Login() {
         throw new Error(`Inloggning misslyckades: ${res.status}`)
       }
       const data = await res.json()
-      setToken(data.token)
       localStorage.setItem('token', data.token)
+      window.dispatchEvent(new Event('auth-change'))
       router.push('/account')
     } catch (err) {
       setError(
