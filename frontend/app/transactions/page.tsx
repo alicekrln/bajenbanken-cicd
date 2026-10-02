@@ -3,6 +3,7 @@
 import { ChevronLeft } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
+import { formatValue } from '../utils/formatValue'
 
 function formatDate(dateString: string) {
   const d = new Date(dateString)
@@ -57,7 +58,7 @@ export default function Transactions() {
                     {t.note || 'Insättning'}
                   </span>
                   <span className='shrink-0 font-bold text-primary'>
-                    + {t.amount} kr
+                    + {formatValue(t.amount.toString())} kr
                   </span>
                 </div>
               </li>

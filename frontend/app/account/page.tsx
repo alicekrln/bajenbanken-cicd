@@ -2,10 +2,11 @@
 
 import React, { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { formatValue } from '../utils/formatValue'
 
 function validateAmount(value: string) {
-  const parsedAmount = Number(value)
-  return Number.isFinite(parsedAmount) && parsedAmount > 0
+  const parsedValue = Number(value)
+  return Number.isFinite(parsedValue) && parsedValue > 0
 }
 
 export default function Account() {
@@ -81,7 +82,7 @@ export default function Account() {
               Hej där, ditt saldo är
             </p>
             <p className='font-black mt-2 text-6xl text-background'>
-              {balance} kr
+              {formatValue(balance)} kr
             </p>
           </div>
           <p className='text-sm font-bold italic tracking-widest text-background/80'>
