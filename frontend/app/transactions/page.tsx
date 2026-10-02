@@ -4,6 +4,13 @@ import { ChevronLeft } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 
+function formatDate(dateString: string) {
+  const d = new Date(dateString)
+  const day = d.getDate()
+  const month = d.getMonth() + 1
+  return `${day}/${month}`
+}
+
 export default function Transactions() {
   const [transactions, setTransactions] = useState<
     Array<{ note?: string; amount: number; createdAt: string }>
@@ -18,14 +25,7 @@ export default function Transactions() {
     })
       .then((res) => res.json())
       .then((data) => setTransactions(data.transactions || []))
-  })
-
-  function formatDate(dateString: string) {
-    const d = new Date(dateString)
-    const day = d.getDate()
-    const month = d.getMonth() + 1
-    return `${day}/${month}`
-  }
+  }, [])
 
   return (
     <div className='bg-background'>
@@ -34,8 +34,8 @@ export default function Transactions() {
           href='/account'
           className='flex items-center gap-2 pb-4 text-sm text-primary font-bold hover:text-secondary-foreground'
         >
-          <ChevronLeft className='w-4 stroke-3' />
-          Tillbaka till insättning
+          <ChevronLeft className='w-3.5 stroke-4' />
+          Tillbaka till kontoöversikt
         </Link>
         <div className='min-w-0 rounded-3xl border-2 border-border bg-card p-7'>
           <h1 className='font-black text-2xl text-primary'>

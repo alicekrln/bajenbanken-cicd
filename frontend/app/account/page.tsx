@@ -1,9 +1,12 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
-import Image from 'next/image'
-import beerIcon from '../../public/beer.png'
 import Link from 'next/link'
+
+function validateAmount(value: string) {
+  const parsedAmount = Number(value)
+  return Number.isFinite(parsedAmount) && parsedAmount > 0
+}
 
 export default function Account() {
   const [value, setValue] = useState('')
@@ -34,7 +37,7 @@ export default function Account() {
     const token = localStorage.getItem('token') || ''
     const parsedAmount = Number(value)
 
-    if (!value.trim() || Number.isNaN(parsedAmount) || parsedAmount <= 0) {
+    if (!validateAmount(value)) {
       setError('Ange ett giltigt belopp i kronor.')
       return
     }
