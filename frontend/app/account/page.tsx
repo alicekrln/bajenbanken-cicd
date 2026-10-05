@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { formatValue } from '../utils/formatValue'
+import { useRouter } from 'next/navigation'
 
 function validateAmount(value: string) {
   const parsedValue = Number(value)
@@ -10,25 +11,62 @@ function validateAmount(value: string) {
 }
 
 export default function Account() {
+  const router = useRouter()
   const [value, setValue] = useState('')
-  const [balance, setBalance] = useState('0')
+  const [balance, setBalance] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   const [note, setNote] = useState('')
 
+  useEffect(() => {
+    const token = localStorage.getItem('token')
+
+    if (!token) {
+      router.replace('/login')
+      return
+    }
+
+    async function loadBalance() {
+      try {
+        const res = await fetch('http://51.21.196.203:3001/me/accounts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: token }),
+        })
+
+        if (res.status === 401) {
+          localStorage.removeItem('token')
+          window.dispatchEvent(new Event('auth-change'))
+          router.replace('/login')
+          return
+        }
+
+        const data = await res.json()
+        
+        if (!res.ok) {
+          setError(data.error ?? 'Kunde inte hämta saldo')
+          return
+        }
+        
+        setBalance(String(data.amount))
+      } catch {
+        setError('Kunde inte nå server')
+      }
+    }
+
+    loadBalance()
+  }, [router])
+
+  if (balance === null) {
+    return error ? (
+      <p className='mx-auto max-w-5xl px-5 py-10 text-error'>{error}</p>
+    ) : (
+      <p className='p-10 text-center'>Laddar...</p>
+    )
+  }
+
   const BEER_PRICE_SEK = 45
   const beerCount = Math.max(0, Math.floor(Number(balance) / BEER_PRICE_SEK))
-
-  useEffect(() => {
-    const t = localStorage.getItem('token') || ''
-    fetch('http://51.21.196.203:3001/me/accounts', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token: t }),
-    })
-      .then((res) => res.json())
-      .then((data) => setBalance(data.amount))
-  }, [])
 
   async function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -58,8 +96,18 @@ export default function Account() {
           }),
         },
       )
+      if (res.status === 401) {
+        localStorage.removeItem('token')
+        window.dispatchEvent(new Event('auth-change'))
+        router.replace('/login')
+        return
+      }
       const data = await res.json()
-      setBalance(data.amount)
+      if (!res.ok) {
+        setError(data.error ?? 'Insättning misslyckades')
+        return
+      }
+      setBalance(String(data.amount))
       setSuccess(true)
       setValue('')
       setNote('')

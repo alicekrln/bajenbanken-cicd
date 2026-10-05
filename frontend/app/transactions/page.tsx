@@ -4,6 +4,9 @@ import { ChevronLeft } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { formatValue } from '../utils/formatValue'
+import { useRouter } from 'next/navigation'
+
+type Transaction = { note?: string; amount: number; createdAt: string }
 
 function formatDate(dateString: string) {
   const d = new Date(dateString)
@@ -13,20 +16,61 @@ function formatDate(dateString: string) {
 }
 
 export default function Transactions() {
-  const [transactions, setTransactions] = useState<
-    Array<{ note?: string; amount: number; createdAt: string }>
-  >([])
+  const router = useRouter()
+  const [transactions, setTransactions] = useState<Transaction[] | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const t = localStorage.getItem('token') || ''
-    fetch('http://51.21.196.203:3001/me/accounts/transactions/history', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token: t }),
-    })
-      .then((res) => res.json())
-      .then((data) => setTransactions(data.transactions || []))
-  }, [])
+    const token = localStorage.getItem('token')
+
+    if (!token) {
+      router.replace('/login')
+      return
+    }
+
+    async function loadTransactions() {
+      try {
+        const res = await fetch(
+          'http://51.21.196.203:3001/me/accounts/transactions/history',
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: token }),
+          },
+        )
+
+        if (res.status === 401) {
+          localStorage.removeItem('token')
+          window.dispatchEvent(new Event('auth-change'))
+          router.replace('/login')
+          return
+        }
+
+        const data = await res.json()
+
+        if (!res.ok) {
+          setError(data.error ?? 'Kunde inte hämta transaktioner')
+          return
+        }
+
+        setTransactions(data.transactions)
+      } catch {
+        setError('Kunde inte nå servern')
+      }
+    }
+
+    loadTransactions()
+  }, [router])
+
+  if (error) {
+    return (
+      <p className='mx-auto max-w-5xl px-5 py-10 text-error'>{error}</p>
+    )
+  }
+
+  if (transactions === null) {
+    return <p className='mx-auto max-w-5xl px-5 py-10'>Laddar...</p>
+  }
 
   return (
     <div className='bg-background'>
