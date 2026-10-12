@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import Link from 'next/link'
+import { API_URL } from '../utils/api'
 
 export default function Login() {
   const router = useRouter()
@@ -15,7 +16,7 @@ export default function Login() {
     setError(null)
 
     try {
-      const res = await fetch('http://51.21.196.203:3001/sessions', {
+      const res = await fetch(`${API_URL}/sessions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -56,7 +57,7 @@ export default function Login() {
               <input
                 className='mt-1 w-full rounded-full border-2 border-input bg-background px-4 py-3 outline-none focus:border-primary'
                 type='text'
-                aria-label='Username'
+                aria-label='username'
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
               />
@@ -68,7 +69,7 @@ export default function Login() {
               <input
                 className='mt-1 w-full rounded-full border-2 border-input bg-background px-4 py-3 outline-none focus:border-primary'
                 type='password'
-                aria-label='Password'
+                aria-label='password'
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />

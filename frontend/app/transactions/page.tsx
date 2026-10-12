@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { formatValue } from '../utils/formatValue'
 import { useRouter } from 'next/navigation'
+import { API_URL } from '../utils/api'
 
 type Transaction = { note?: string; amount: number; createdAt: string }
 
@@ -30,14 +31,11 @@ export default function Transactions() {
 
     async function loadTransactions() {
       try {
-        const res = await fetch(
-          'http://51.21.196.203:3001/me/accounts/transactions/history',
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ token: token }),
-          },
-        )
+        const res = await fetch(`${API_URL}/me/accounts/transactions/history`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: token }),
+        })
 
         if (res.status === 401) {
           localStorage.removeItem('token')
@@ -63,9 +61,7 @@ export default function Transactions() {
   }, [router])
 
   if (error) {
-    return (
-      <p className='mx-auto max-w-5xl px-5 py-10 text-error'>{error}</p>
-    )
+    return <p className='mx-auto max-w-5xl px-5 py-10 text-error'>{error}</p>
   }
 
   if (transactions === null) {
@@ -102,7 +98,9 @@ export default function Transactions() {
                     {t.note || 'Insättning'}
                   </span>
                   <span className='shrink-0 font-bold text-primary'>
-                    + {formatValue(t.amount.toString())} kr
+                    <span>+ </span>
+                    <span id='transitAmount'>{formatValue(t.amount.toString())}</span>
+                    <span> kr</span>
                   </span>
                 </div>
               </li>

@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation'
 import React, { useState } from 'react'
 import Link from 'next/link'
+import { API_URL } from '../utils/api'
 
 export default function Register() {
   const router = useRouter()
@@ -15,7 +16,7 @@ export default function Register() {
     setError(null)
 
     try {
-      const res = await fetch('http://51.21.196.203:3001/users', {
+      const res = await fetch(`${API_URL}/users`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -56,7 +57,7 @@ export default function Register() {
               <input
                 className='mt-1 w-full rounded-full border-2 border-input bg-background px-4 py-3 outline-none focus:border-primary placeholder:italic'
                 type='text'
-                aria-label='Username'
+                aria-label='username'
                 value={username}
                 placeholder='kentakompis'
                 onChange={(e) => setUsername(e.target.value)}
@@ -69,7 +70,7 @@ export default function Register() {
               <input
                 className='mt-1 w-full rounded-full border-2 border-input bg-background px-4 py-3 outline-none focus:border-primary placeholder:italic'
                 type='password'
-                aria-label='Password'
+                aria-label='password'
                 value={password}
                 placeholder='halvklurigt lösenord'
                 onChange={(e) => setPassword(e.target.value)}
