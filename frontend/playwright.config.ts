@@ -1,9 +1,9 @@
 import { defineConfig } from '@playwright/test'
 
-module.exports = defineConfig({
-  testDir: './tests',
+export default defineConfig({
+  testDir: './tests/e2e',
   use: {
-    baseURL: 'http://51.21.196.203:3000',
+    baseURL: 'http://localhost:3000',
     browserName: 'chromium',
   },
 })

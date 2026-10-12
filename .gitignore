@@ -1,4 +1,7 @@
 **/node_modules/
-tests/test-results/
-tests/playwright-report/
+**/test-results/
+**/playwright-report/
+**/blob-report/
+**/.playwright/
 frontend/.next/
+.env

@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { formatValue } from '../utils/formatValue'
 import { useRouter } from 'next/navigation'
+import { API_URL } from '../utils/api'
 
 function validateAmount(value: string) {
   const parsedValue = Number(value)
@@ -28,7 +29,7 @@ export default function Account() {
 
     async function loadBalance() {
       try {
-        const res = await fetch('http://51.21.196.203:3001/me/accounts', {
+        const res = await fetch(`${API_URL}/me/accounts`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ token: token }),
@@ -42,12 +43,12 @@ export default function Account() {
         }
 
         const data = await res.json()
-        
+
         if (!res.ok) {
           setError(data.error ?? 'Kunde inte hämta saldo')
           return
         }
-        
+
         setBalance(String(data.amount))
       } catch {
         setError('Kunde inte nå server')
@@ -82,20 +83,17 @@ export default function Account() {
     }
 
     try {
-      const res = await fetch(
-        'http://51.21.196.203:3001/me/accounts/transactions',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            token,
-            amount: parsedAmount,
-            note,
-          }),
+      const res = await fetch(`${API_URL}/me/accounts/transactions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-      )
+        body: JSON.stringify({
+          token,
+          amount: parsedAmount,
+          note,
+        }),
+      })
       if (res.status === 401) {
         localStorage.removeItem('token')
         window.dispatchEvent(new Event('auth-change'))
@@ -126,12 +124,13 @@ export default function Account() {
       <main className='mx-auto w-full max-w-5xl px-5 py-10'>
         <div className='flex flex-col items-center justify-center gap-4 rounded-3xl bg-primary px-4 py-10 text-center shadow-xl'>
           <div className='flex flex-col items-center'>
-            <p className='text-sm font-bold uppercase tracking-widest text-background/80'>
+            <span className='text-sm font-bold uppercase tracking-widest text-background/80'>
               Hej där, ditt saldo är
-            </p>
-            <p className='font-black mt-2 text-6xl text-background'>
-              {formatValue(balance)} kr
-            </p>
+            </span>
+            <span className='font-black mt-2 text-6xl text-background'>
+              <span id='yourBalance'>{formatValue(balance)}</span>
+              <span> kr</span>
+            </span>
           </div>
           <p className='text-sm font-bold italic tracking-widest text-background/80'>
             Räcker till {beerCount} öl
