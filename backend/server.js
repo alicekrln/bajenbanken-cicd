@@ -31,12 +31,15 @@ function generateOTP() {
 app.post('/users', async (req, res) => {
   const { username, password } = req.body
 
-  if (typeof username !== 'string' || password.length < 8) {
+  if (typeof username !== 'string' || username.trim() === '') {
+    return res.status(400).json({ error: 'Användarnamn krävs' })
+  }
+
+  if (typeof password !== 'string' || password.length < 8) {
     return res
       .status(400)
       .json({ error: 'Lösenordet måste vara minst 8 tecken' })
   }
-
   try {
     const passwordHash = await bcrypt.hash(password, 12)
 
