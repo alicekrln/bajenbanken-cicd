@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS users (
   id INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
   username VARCHAR(256) NOT NULL,
-  password VARCHAR(256) NOT NULL,
+  password_hash VARCHAR(256) NOT NULL,
   PRIMARY KEY (id),
   UNIQUE KEY users_username_unique (username)
 );
