@@ -6,13 +6,6 @@ CREATE TABLE IF NOT EXISTS users (
   UNIQUE KEY users_username_unique (username)
 );
 
-CREATE TABLE IF NOT EXISTS sessions (
-  userId INT(11) UNSIGNED NOT NULL,
-  token VARCHAR(6) NOT NULL,
-  PRIMARY KEY (userId),
-  UNIQUE KEY sessions_token_unique (token)
-);
-
 CREATE TABLE IF NOT EXISTS accounts (
   id INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
   userId INT(11) UNSIGNED NOT NULL,

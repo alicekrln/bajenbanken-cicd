@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { formatValue } from '../utils/formatValue'
 import { useRouter } from 'next/navigation'
 import { API_URL } from '../utils/api'
+import { useAuth } from '../context/AuthContext'
 
 function validateAmount(value: string) {
   const parsedValue = Number(value)
@@ -13,6 +14,7 @@ function validateAmount(value: string) {
 
 export default function Account() {
   const router = useRouter()
+  const { token, logout } = useAuth()
   const [value, setValue] = useState('')
   const [balance, setBalance] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -20,8 +22,6 @@ export default function Account() {
   const [note, setNote] = useState('')
 
   useEffect(() => {
-    const token = localStorage.getItem('token')
-
     if (!token) {
       router.replace('/login')
       return
@@ -31,13 +31,14 @@ export default function Account() {
       try {
         const res = await fetch(`${API_URL}/me/accounts`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token: token }),
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
         })
 
         if (res.status === 401) {
-          localStorage.removeItem('token')
-          window.dispatchEvent(new Event('auth-change'))
+          logout()
           router.replace('/login')
           return
         }
@@ -56,7 +57,7 @@ export default function Account() {
     }
 
     loadBalance()
-  }, [router])
+  }, [token, logout, router])
 
   if (balance === null) {
     return error ? (
@@ -74,7 +75,6 @@ export default function Account() {
     setError(null)
     setSuccess(false)
 
-    const token = localStorage.getItem('token') || ''
     const parsedAmount = Number(value)
 
     if (!validateAmount(value)) {
@@ -86,17 +86,16 @@ export default function Account() {
       const res = await fetch(`${API_URL}/me/accounts/transactions`, {
         method: 'POST',
         headers: {
+          Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          token,
           amount: parsedAmount,
           note,
         }),
       })
       if (res.status === 401) {
-        localStorage.removeItem('token')
-        window.dispatchEvent(new Event('auth-change'))
+        logout()
         router.replace('/login')
         return
       }

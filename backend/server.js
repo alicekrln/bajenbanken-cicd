@@ -3,6 +3,14 @@ import bodyParser from 'body-parser'
 import cors from 'cors'
 import mysql from 'mysql2/promise'
 import bcrypt from 'bcryptjs'
+import jwt from 'jsonwebtoken'
+import { validateAmount } from './src/validateAmount.js'
+
+const secret = process.env.JWT_SECRET
+
+if (!secret || Buffer.byteLength(secret, 'utf8') < 32) {
+  throw new Error('JWT_SECRET måste vara minst 32 byte')
+}
 
 const app = express()
 const port = process.env.PORT || 3001
@@ -23,9 +31,46 @@ async function query(sql, params) {
   return results
 }
 
-function generateOTP() {
-  const otp = Math.floor(100000 + Math.random() * 900000)
-  return otp.toString()
+function requireAuth(req, res, next) {
+  const authHeader = req.get('authorization')
+
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Saknar eller felaktig Authorization-header' })
+  }
+
+  const token = authHeader.slice('Bearer '.length).trim()
+
+  if (!token) {
+    return res.status(401).json({ error: 'Saknar token' })
+  }
+
+  let payload
+  try {
+    payload = jwt.verify(token, secret, {
+      algorithms: ['HS256'],
+      issuer: 'banken',
+      audience: 'banken-api',
+    })
+  } catch {
+    return res.status(401).json({ error: 'Ogiltig eller utgången token' })
+  }
+
+  if (
+    typeof payload !== 'object' ||
+    payload === null ||
+    typeof payload.sub !== 'string'
+  ) {
+    return res.status(401).json({ error: 'Ogiltig eller utgången token' })
+  }
+
+  const userId = Number(payload.sub)
+
+  if (!Number.isSafeInteger(userId) || userId <= 0) {
+    return res.status(401).json({ error: 'Ogiltig eller utgången token' })
+  }
+
+  req.userId = userId
+  next()
 }
 
 app.post('/users', async (req, res) => {
@@ -89,42 +134,29 @@ app.post('/sessions', async (req, res) => {
       return res.status(401).json({ error: 'Fel användarnamn eller lösenord' })
     }
 
-    const userId = user.id
-    const otp = generateOTP()
+    const token = jwt.sign({ sub: String(user.id) }, secret, {
+      algorithm: 'HS256',
+      issuer: 'banken',
+      audience: 'banken-api',
+      expiresIn: '15m',
+    })
 
-    await query(
-      'INSERT INTO sessions (userId, token) VALUES (?, ?) ON DUPLICATE KEY UPDATE token = ?',
-      [userId, otp, otp],
-    )
-
-    return res.json({ token: otp })
+    return res.json({ token })
   } catch (error) {
     console.error(error)
     return res.status(500).json({ error: 'Kunde inte logga in' })
   }
 })
 
-app.post('/me/accounts', async (req, res) => {
-  const { token } = req.body
-
+app.post('/me/accounts', requireAuth, async (req, res) => {
   try {
-    const sessionResult = await query(
-      'SELECT * FROM sessions WHERE token = ?',
-      [token],
-    )
-
-    if (sessionResult.length === 0) {
-      return res.status(401).json({ error: 'Ogiltig token' })
-    }
-
-    const userId = sessionResult[0].userId
     const accountResult = await query(
-      'SELECT * FROM accounts WHERE userId = ?',
-      [userId],
+      'SELECT amount FROM accounts WHERE userId = ?',
+      [req.userId],
     )
 
     if (accountResult.length === 0) {
-      return res.status(401).json({ error: 'Inget konto hittades' })
+      return res.status(404).json({ error: 'Inget konto hittades' })
     }
 
     return res.json({ amount: accountResult[0].amount })
@@ -134,35 +166,28 @@ app.post('/me/accounts', async (req, res) => {
   }
 })
 
-app.post('/me/accounts/transactions', async (req, res) => {
-  const { token, amount, note } = req.body
+app.post('/me/accounts/transactions', requireAuth, async (req, res) => {
+  const { amount, note } = req.body
+
+  if (!validateAmount(amount)) {
+    return res.status(400).json({ error: 'Beloppet måste vara större än 0' })
+  }
 
   try {
-    const sessionResult = await query(
-      'SELECT * FROM sessions WHERE token = ?',
-      [token],
-    )
-
-    if (sessionResult.length === 0) {
-      return res.status(401).json({ error: 'Ogiltig token' })
-    }
-
-    const userId = sessionResult[0].userId
-
     const accountResult = await query(
-      'SELECT * FROM accounts WHERE userId = ?',
-      [userId],
+      'SELECT id FROM accounts WHERE userId = ?',
+      [req.userId],
     )
 
     if (accountResult.length === 0) {
-      return res.status(401).json({ error: 'Inget konto hittades' })
+      return res.status(404).json({ error: 'Inget konto hittades' })
     }
 
     const accountId = accountResult[0].id
 
     await query('UPDATE accounts SET amount = amount + ? WHERE userId = ?', [
       Number(amount),
-      userId,
+      req.userId,
     ])
 
     await query(
@@ -171,8 +196,8 @@ app.post('/me/accounts/transactions', async (req, res) => {
     )
 
     const updatedAccount = await query(
-      'SELECT * FROM accounts WHERE userId = ?',
-      [userId],
+      'SELECT amount FROM accounts WHERE userId = ?',
+      [req.userId],
     )
 
     return res.json({ amount: updatedAccount[0].amount })
@@ -182,35 +207,20 @@ app.post('/me/accounts/transactions', async (req, res) => {
   }
 })
 
-app.post('/me/accounts/transactions/history', async (req, res) => {
-  const { token } = req.body
-
+app.post('/me/accounts/transactions/history', requireAuth, async (req, res) => {
   try {
-    const sessionResult = await query(
-      'SELECT * FROM sessions WHERE token = ?',
-      [token],
-    )
-
-    if (sessionResult.length === 0) {
-      return res.status(401).json({ error: 'Ogiltig token' })
-    }
-
-    const userId = sessionResult[0].userId
-
     const accountResult = await query(
-      'SELECT * FROM accounts WHERE userId = ?',
-      [userId],
+      'SELECT id FROM accounts WHERE userId = ?',
+      [req.userId],
     )
 
     if (accountResult.length === 0) {
-      return res.status(401).json({ error: 'Inget konto hittades' })
+      return res.status(404).json({ error: 'Inget konto hittades' })
     }
-
-    const accountId = accountResult[0].id
 
     const transactions = await query(
       'SELECT amount, note, createdAt FROM transactions WHERE accountId = ? ORDER BY createdAt DESC',
-      [accountId],
+      [accountResult[0].id],
     )
 
     return res.json({ transactions })
