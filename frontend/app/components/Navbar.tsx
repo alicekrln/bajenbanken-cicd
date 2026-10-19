@@ -2,29 +2,16 @@
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useSyncExternalStore } from 'react'
-
-function subscribe(callback: () => void) {
-  window.addEventListener('storage', callback)
-  window.addEventListener('auth-change', callback)
-  return () => {
-    window.removeEventListener('storage', callback)
-    window.removeEventListener('auth-change', callback)
-  }
-}
+import { useAuth } from '../context/AuthContext'
 
 export function Navbar() {
   const router = useRouter()
-  const isLoggedIn = useSyncExternalStore(
-    subscribe,
-    () => !!localStorage.getItem('token'),
-    () => false,
-  )
+  const { token, logout } = useAuth()
+  const isLoggedIn = token !== null
 
   function handleLogout() {
-    localStorage.removeItem('token')
-    window.dispatchEvent(new Event('auth-change'))
-    router.push('/')
+    logout()
+    router.push('/login')
   }
 
   const hrefOpt = isLoggedIn ? '/account' : '/'

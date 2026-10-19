@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react'
 import { formatValue } from '../utils/formatValue'
 import { useRouter } from 'next/navigation'
 import { API_URL } from '../utils/api'
+import { useAuth } from '../context/AuthContext'
 
 type Transaction = { note?: string; amount: number; createdAt: string }
 
@@ -18,12 +19,11 @@ function formatDate(dateString: string) {
 
 export default function Transactions() {
   const router = useRouter()
+  const { token, logout } = useAuth()
   const [transactions, setTransactions] = useState<Transaction[] | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const token = localStorage.getItem('token')
-
     if (!token) {
       router.replace('/login')
       return
@@ -33,13 +33,14 @@ export default function Transactions() {
       try {
         const res = await fetch(`${API_URL}/me/accounts/transactions/history`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token: token }),
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
         })
 
         if (res.status === 401) {
-          localStorage.removeItem('token')
-          window.dispatchEvent(new Event('auth-change'))
+          logout()
           router.replace('/login')
           return
         }
@@ -58,7 +59,7 @@ export default function Transactions() {
     }
 
     loadTransactions()
-  }, [router])
+  }, [token, logout, router])
 
   if (error) {
     return <p className='mx-auto max-w-5xl px-5 py-10 text-error'>{error}</p>
@@ -99,7 +100,9 @@ export default function Transactions() {
                   </span>
                   <span className='shrink-0 font-bold text-primary'>
                     <span>+ </span>
-                    <span id='transitAmount'>{formatValue(t.amount.toString())}</span>
+                    <span id='transitAmount'>
+                      {formatValue(t.amount.toString())}
+                    </span>
                     <span> kr</span>
                   </span>
                 </div>
