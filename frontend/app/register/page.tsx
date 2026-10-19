@@ -46,10 +46,12 @@ export default function Register() {
           <p className='mt-1 text-sm text-muted-foreground'>
             Bara två fält emellan dig och rikedom.
           </p>
-          <form onSubmit={(event) => {
-            handleSubmit(event)
-          }} 
-          className='mt-6 space-y-4'>
+          <form
+            onSubmit={(event) => {
+              handleSubmit(event)
+            }}
+            className='mt-6 space-y-4'
+          >
             <label className='block'>
               <span className='text-sm font-bold text-foreground'>
                 Användarnamn
@@ -72,6 +74,7 @@ export default function Register() {
                 type='password'
                 aria-label='password'
                 value={password}
+                minLength={8}
                 placeholder='halvklurigt lösenord'
                 onChange={(e) => setPassword(e.target.value)}
               />

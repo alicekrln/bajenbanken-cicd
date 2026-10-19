@@ -2,6 +2,7 @@ import express from 'express'
 import bodyParser from 'body-parser'
 import cors from 'cors'
 import mysql from 'mysql2/promise'
+import bcrypt from 'bcryptjs'
 
 const app = express()
 const port = process.env.PORT || 3001
@@ -30,10 +31,18 @@ function generateOTP() {
 app.post('/users', async (req, res) => {
   const { username, password } = req.body
 
+  if (typeof username !== 'string' || password.length < 8) {
+    return res
+      .status(400)
+      .json({ error: 'Lösenordet måste vara minst 8 tecken' })
+  }
+
   try {
+    const passwordHash = await bcrypt.hash(password, 12)
+
     const result = await query(
-      'INSERT INTO users (username, password) VALUES (?, ?)',
-      [username, password],
+      'INSERT INTO users (username, password_hash) VALUES (?, ?)',
+      [username.trim(), passwordHash],
     )
     const userId = result.insertId
 
@@ -41,8 +50,12 @@ app.post('/users', async (req, res) => {
       userId,
       0,
     ])
-    return res.status(201).json({ id: userId, username })
+
+    return res.status(201).json({ id: userId, username: username.trim() })
   } catch (error) {
+    if (error.code === 'ER_DUP_ENTRY') {
+      return res.status(409).json({ error: 'Användarnamnet är redan taget' })
+    }
     console.error(error)
     return res.status(500).json({ error: 'Kunde inte skapa användare' })
   }
@@ -51,17 +64,29 @@ app.post('/users', async (req, res) => {
 app.post('/sessions', async (req, res) => {
   const { username, password } = req.body
 
+  if (typeof username !== 'string' || typeof password !== 'string') {
+    return res.status(401).json({ error: 'Fel användarnamn eller lösenord' })
+  }
+
   try {
     const result = await query(
-      'SELECT * FROM users WHERE username = ? AND password = ?',
-      [username, password],
+      'SELECT id, password_hash FROM users WHERE username = ?',
+      [username.trim()],
     )
 
-    if (result.length === 0) {
+    const user = result[0]
+
+    if (!user) {
       return res.status(401).json({ error: 'Fel användarnamn eller lösenord' })
     }
 
-    const userId = result[0].id
+    const passwordIsCorrect = await bcrypt.compare(password, user.password_hash)
+
+    if (!passwordIsCorrect) {
+      return res.status(401).json({ error: 'Fel användarnamn eller lösenord' })
+    }
+
+    const userId = user.id
     const otp = generateOTP()
 
     await query(
